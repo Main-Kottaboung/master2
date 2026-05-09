@@ -1,0 +1,20 @@
+<div class="min-h-screen flex flex-col bg-white text-slate-900">
+  <app-navbar></app-navbar>
+
+  <main class="flex-1">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <section class="lg:col-span-8">
+          <router-outlet></router-outlet>
+        </section>
+        <aside class="lg:col-span-4">
+          <div class="sticky top-8 space-y-4">
+            <div class="p-4 bg-white border rounded">Product filters / promos (placeholder)</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>

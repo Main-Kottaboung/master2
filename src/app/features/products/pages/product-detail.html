@@ -1,0 +1,73 @@
+<div *ngIf="notFound; else productContent" class="text-center py-12">
+  <div class="text-slate-500 text-lg">Product not found</div>
+  <a routerLink="/shop" class="mt-4 inline-block px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800">
+    Back to Shop
+  </a>
+</div>
+
+<ng-template #productContent>
+  <div *ngIf="product" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Image -->
+    <div class="flex items-center justify-center bg-slate-100 rounded-lg h-96">
+      <img
+        [src]="product.image"
+        [alt]="product.name"
+        class="w-full h-full object-cover rounded-lg"
+      />
+    </div>
+
+    <!-- Details -->
+    <div class="space-y-6">
+      <div>
+        <div class="text-xs text-slate-500 uppercase tracking-wide">{{ product.category }}</div>
+        <h1 class="text-3xl font-bold text-slate-900 mt-1">{{ product.name }}</h1>
+      </div>
+
+      <!-- Rating -->
+      <div class="flex items-center gap-3">
+        <div class="text-lg text-slate-900">{{ product.rating }} ★</div>
+        <span class="text-slate-600">({{ product.reviews }} reviews)</span>
+      </div>
+
+      <!-- Price -->
+      <div class="text-3xl font-bold text-slate-900">${{ product.price.toFixed(2) }}</div>
+
+      <!-- Description -->
+      <div class="text-slate-700">{{ product.description }}</div>
+
+      <!-- Stock Status -->
+      <div [ngClass]="product.inStock ? 'text-green-600' : 'text-red-600'" class="font-semibold">
+        {{ product.inStock ? 'In Stock' : 'Out of Stock' }}
+      </div>
+
+      <!-- SKU -->
+      <div class="text-sm text-slate-600">
+        <span class="font-medium">SKU:</span> {{ product.sku }}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 pt-4">
+        <button
+          (click)="addToCart()"
+          [disabled]="!product.inStock"
+          class="flex-1 px-6 py-3 font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {{ product.inStock ? 'Add to Cart' : 'Out of Stock' }}
+        </button>
+        <button class="px-6 py-3 font-semibold text-slate-900 border-2 border-slate-900 rounded-lg hover:bg-slate-50 transition-colors">
+          ♡ Wishlist
+        </button>
+      </div>
+
+      <!-- Related Info -->
+      <div class="pt-6 border-t">
+        <h3 class="font-semibold text-slate-900 mb-2">More Details</h3>
+        <ul class="space-y-1 text-sm text-slate-600">
+          <li>✓ Free shipping on orders over $50</li>
+          <li>✓ 30-day money back guarantee</li>
+          <li>✓ 2-year warranty included</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</ng-template>

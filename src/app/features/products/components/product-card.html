@@ -1,0 +1,40 @@
+<a [routerLink]="['/shop', product.id]" class="block group">
+  <div class="border rounded-lg overflow-hidden bg-white hover:shadow-lg transition-shadow">
+    <!-- Image -->
+    <div class="relative w-full h-48 bg-slate-200 overflow-hidden">
+      <img 
+        [src]="product.image" 
+        [alt]="product.name"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+      <div *ngIf="!product.inStock" class="absolute inset-0 bg-black/50 flex items-center justify-center">
+        <span class="text-white font-semibold">Out of Stock</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wide">{{ product.category }}</div>
+      <h3 class="text-sm font-semibold text-slate-900 mt-1 line-clamp-2">{{ product.name }}</h3>
+      
+      <!-- Rating -->
+      <div class="flex items-center gap-1 mt-2">
+        <div class="text-xs text-slate-600">{{ product.rating }} ★</div>
+        <span class="text-xs text-slate-500">({{ product.reviews }})</span>
+      </div>
+
+      <!-- Price -->
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-lg font-bold text-slate-900">${{ product.price.toFixed(2) }}</span>
+      </div>
+
+      <!-- CTA -->
+      <button 
+        [disabled]="!product.inStock"
+        class="w-full mt-3 px-3 py-2 text-sm font-medium rounded bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {{ product.inStock ? 'Add to Cart' : 'Out of Stock' }}
+      </button>
+    </div>
+  </div>
+</a>
