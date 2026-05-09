@@ -8,13 +8,30 @@
       <nav class="hidden md:flex items-center gap-4 text-sm">
         <a routerLink="/shop" class="text-slate-700 hover:text-slate-900">Shop</a>
         <a routerLink="/cart" class="text-slate-700 hover:text-slate-900">Cart</a>
-        <a routerLink="/account" class="text-slate-700 hover:text-slate-900">Account</a>
+        <a *ngIf="authService.isAuthenticated()" routerLink="/account" class="text-slate-700 hover:text-slate-900">Account</a>
       </nav>
 
       <div class="flex items-center gap-3">
         <button class="md:hidden p-2 rounded-md text-slate-700 hover:bg-slate-100">☰</button>
-        <a routerLink="/cart" class="px-3 py-2 rounded-md bg-slate-900 text-white text-sm">Cart</a>
+
+        <!-- Auth Section -->
+        <ng-container *ngIf="authService.isAuthenticated(); else notAuth">
+          <div class="flex items-center gap-2 text-sm">
+            <span class="hidden sm:inline text-slate-700">{{ authService.user()?.email }}</span>
+            <button
+              (click)="logout()"
+              class="px-3 py-2 rounded-md bg-slate-100 text-slate-900 hover:bg-slate-200 text-xs font-medium transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #notAuth>
+          <a routerLink="/auth/login" class="px-3 py-2 rounded-md bg-slate-900 text-white text-sm">Sign in</a>
+        </ng-template>
       </div>
     </div>
   </div>
 </header>
+

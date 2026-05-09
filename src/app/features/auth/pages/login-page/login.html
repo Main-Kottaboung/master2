@@ -1,0 +1,100 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-slate-900">ShopBrand</h1>
+      <h2 class="mt-6 text-2xl font-bold text-slate-900">Sign in to your account</h2>
+      <p class="mt-2 text-sm text-slate-600">
+        Or
+        <a routerLink="/auth/register" class="font-medium text-slate-900 hover:underline">create a new account</a>
+      </p>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error()" class="rounded-md bg-red-50 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-red-800">{{ error() }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-8 space-y-6">
+      <!-- Email -->
+      <div>
+        <label for="email" class="block text-sm font-medium text-slate-700">Email address</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-900 focus:border-slate-900 sm:text-sm"
+          [class.border-red-500]="email?.invalid && email?.touched"
+        />
+        <p *ngIf="email?.invalid && email?.touched" class="mt-1 text-sm text-red-600">
+          {{ email?.hasError('required') ? 'Email is required' : 'Please enter a valid email' }}
+        </p>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-900 focus:border-slate-900 sm:text-sm"
+          [class.border-red-500]="password?.invalid && password?.touched"
+        />
+        <p *ngIf="password?.invalid && password?.touched" class="mt-1 text-sm text-red-600">
+          {{ password?.hasError('required') ? 'Password is required' : 'Password must be at least 6 characters' }}
+        </p>
+      </div>
+
+      <!-- Remember me -->
+      <div class="flex items-center justify-between">
+        <label class="flex items-center">
+          <input type="checkbox" class="h-4 w-4 text-slate-900 focus:ring-slate-900 border-slate-300 rounded" />
+          <span class="ml-2 block text-sm text-slate-700">Remember me</span>
+        </label>
+        <a href="#" class="text-sm font-medium text-slate-900 hover:underline">Forgot password?</a>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        [disabled]="form.invalid || loading()"
+        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <span *ngIf="!loading()">Sign in</span>
+        <span *ngIf="loading()" class="flex items-center gap-2">
+          <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
+          Signing in...
+        </span>
+      </button>
+    </form>
+
+    <!-- Demo Credentials -->
+    <div class="rounded-md bg-blue-50 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0zM8 9a1 1 0 100-2 1 1 0 000 2zm5-1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-blue-800">
+            Demo: user@example.com / password123
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
