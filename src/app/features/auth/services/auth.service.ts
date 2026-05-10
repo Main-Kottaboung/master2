@@ -1,7 +1,16 @@
 import { Injectable, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/auth';
+import { firstValueFrom, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import {
+  UserRole,
+  LoginResponse,
+  LoginRequest,
+  RegisterRequest,
+  BackendLoginResponse,
+  ApiErrorResponse,
+  AuthUserDto
+} from '../interfaces/auth-api.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +19,7 @@ export class AuthService {
   private apiUrl = 'http://localhost:3000/api/auth'; // Backend API URL
 
   // Signals for reactive state
-  private userSignal = signal<User | null>(null);
+  private userSignal = signal<AuthUserDto | null>(null);
   private tokenSignal = signal<string | null>(null);
   private loadingSignal = signal(false);
   private errorSignal = signal<string | null>(null);
@@ -21,9 +30,7 @@ export class AuthService {
   loading = this.loadingSignal.asReadonly();
   error = this.errorSignal.asReadonly();
 
-  isAuthenticated = computed(() => {
-    return this.userSignal() !== null && this.tokenSignal() !== null;
-  });
+  isAuthenticated = computed(() => this.userSignal() !== null && this.tokenSignal() !== null);
 
   constructor(private http: HttpClient) {
     this.initializeAuth();
@@ -32,8 +39,9 @@ export class AuthService {
 
   /**
    * Initialize auth from localStorage (auto-login on app init)
+   * Public so APP_INITIALIZER can call it explicitly
    */
-  private initializeAuth() {
+  public initializeAuth() {
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('auth_user');
 
@@ -69,6 +77,15 @@ export class AuthService {
     });
   }
 
+  private normalizeLoginResponse(
+    response: BackendLoginResponse
+  ): LoginResponse {
+    return {
+      user: response.data,
+      token: response.token
+    };
+  }
+
   /**
    * Login user and store token
    */
@@ -77,14 +94,23 @@ export class AuthService {
     this.loadingSignal.set(true);
 
     try {
-      const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/login`, request)
+      const obs = this.http.post<BackendLoginResponse>(`${this.apiUrl}/login`, request).pipe(
+        tap((res) => console.debug('[AuthService] login response:', res)),
+        catchError((err) => {
+          console.error('[AuthService] login API error:', err);
+          return throwError(() => err);
+        })
       );
 
-      this.setAuthState(response);
-      return response;
+      const response = await firstValueFrom(obs);
+      const normalized = this.normalizeLoginResponse(response);
+
+      console.debug('[AuthService] normalized login response:', normalized);
+
+      this.setAuthState(normalized);
+      return normalized;
     } catch (error: any) {
-      const message = error?.error?.message || 'Login failed';
+      const message = (error?.error as ApiErrorResponse)?.message || error?.message || 'Login failed';
       this.errorSignal.set(message);
       throw error;
     } finally {
@@ -100,14 +126,23 @@ export class AuthService {
     this.loadingSignal.set(true);
 
     try {
-      const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/register`, request)
+      const obs = this.http.post<BackendLoginResponse>(`${this.apiUrl}/register`, request).pipe(
+        tap((raw) => console.debug('[AuthService] raw register response:', raw)),
+        catchError((err) => {
+          console.error('[AuthService] register API error:', err);
+          return throwError(() => err);
+        })
       );
 
-      this.setAuthState(response);
-      return response;
+      const response = await firstValueFrom(obs);
+      const normalized = this.normalizeLoginResponse(response);
+
+      console.debug('[AuthService] normalized register response:', normalized);
+
+      this.setAuthState(normalized);
+      return normalized;
     } catch (error: any) {
-      const message = error?.error?.message || 'Registration failed';
+      const message = (error?.error as ApiErrorResponse)?.message || error?.message || 'Registration failed';
       this.errorSignal.set(message);
       throw error;
     } finally {
@@ -125,13 +160,22 @@ export class AuthService {
   /**
    * Set auth state and persist to localStorage
    */
-  private setAuthState(response: AuthResponse) {
+  private setAuthState(response: LoginResponse) {
+    if (!response?.user || !response?.token) {
+      throw new Error('Invalid auth response');
+    }
+
     this.userSignal.set(response.user);
     this.tokenSignal.set(response.token);
 
-    // Persist to localStorage
-    localStorage.setItem('auth_token', response.token);
-    localStorage.setItem('auth_user', JSON.stringify(response.user));
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('auth_token', response.token);
+        localStorage.setItem('auth_user', JSON.stringify(response.user));
+      } catch (e) {
+        console.error('[AuthService] Failed to persist auth state', e);
+      }
+    }
   }
 
   /**
@@ -176,7 +220,7 @@ export class AuthService {
   /**
    * Get current user
    */
-  getCurrentUser(): User | null {
+  getCurrentUser(): AuthUserDto | null {
     return this.userSignal();
   }
 
