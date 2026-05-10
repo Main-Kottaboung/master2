@@ -14,5 +14,6 @@ export class Navbar {
   
   logout() {
     this.authService.logout();
+    console.log(this.authService.getCurrentUser());
   }
 }

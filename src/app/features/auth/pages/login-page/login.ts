@@ -42,6 +42,9 @@ export class LoginPage {
     try {
       await this.authService.login(this.form.value);
       this.router.navigateByUrl(this.returnUrl);
+      
+      console.log(this.authService.getCurrentUser());
+      console.log('Login successful');
     } catch (error) {
       console.error('Login failed', error);
     }
