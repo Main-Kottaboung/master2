@@ -1,59 +1,176 @@
 <div class="space-y-6">
-  <!-- Filters -->
-  <div class="bg-white p-4 rounded-lg border">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Search -->
+  <section class="bg-white border border-slate-200 rounded-2xl p-4 md:p-6">
+    <div class="flex items-center justify-between gap-4 mb-4">
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Search</label>
+        <h1 class="text-xl md:text-2xl font-semibold text-slate-900">Browse Products</h1>
+        <p class="text-sm text-slate-600 mt-1">Discover items from our catalog with filters and search.</p>
+      </div>
+      <div class="text-sm text-slate-600">
+        {{ pagination().total }} item{{ pagination().total === 1 ? '' : 's' }}
+      </div>
+    </div>
+
+    <form [formGroup]="filtersForm" (ngSubmit)="onApplyFilters()" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+      <div class="xl:col-span-2">
+        <label for="search" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Search</label>
         <input
+          id="search"
           type="text"
-          [(ngModel)]="searchQuery"
-          placeholder="Search products..."
-          class="w-full px-3 py-2 border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+          formControlName="q"
+          placeholder="Search by name or keyword"
+          class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
         />
       </div>
 
-      <!-- Category Filter -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Category</label>
+        <label for="category" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Category</label>
         <select
-          [(ngModel)]="selectedCategory"
-          class="w-full px-3 py-2 border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+          id="category"
+          formControlName="category"
+          class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
         >
-          <option [ngValue]="null">All Categories</option>
-          <option *ngFor="let cat of categories()" [ngValue]="cat">{{ cat }}</option>
+          <option value="">All categories</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.slug ?? category.name">{{ category.name }}</option>
+          }
         </select>
       </div>
-    </div>
 
-    <div class="mt-4 flex gap-2">
-      <button
-        (click)="clearFilters()"
-        class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-      >
-        Clear Filters
-      </button>
-      <div class="text-sm text-slate-600 flex items-center">
-        {{ products().length }} product{{ products().length !== 1 ? 's' : '' }} found
+      <div>
+        <label for="minPrice" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Min price</label>
+        <input
+          id="minPrice"
+          type="number"
+          min="0"
+          formControlName="minPrice"
+          placeholder="0"
+          class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+        />
       </div>
-    </div>
-  </div>
 
-  <!-- Products Grid -->
-  <div *ngIf="products().length > 0; else noResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-    <app-product-card *ngFor="let product of products()" [product]="product"></app-product-card>
-  </div>
+      <div>
+        <label for="maxPrice" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Max price</label>
+        <input
+          id="maxPrice"
+          type="number"
+          min="0"
+          formControlName="maxPrice"
+          placeholder="2000"
+          class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+        />
+      </div>
 
-  <!-- No Results -->
-  <ng-template #noResults>
-    <div class="text-center py-12">
-      <div class="text-slate-500 text-lg">No products found</div>
+      <div>
+        <label for="limit" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Per page</label>
+        <select
+          id="limit"
+          formControlName="limit"
+          class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+        >
+          <option [value]="8">8</option>
+          <option [value]="12">12</option>
+          <option [value]="24">24</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-2 xl:col-span-5 flex flex-wrap gap-2 pt-1">
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
+        >
+          Apply filters
+        </button>
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition-colors"
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+
+    @if (!categoryLoading() && categories().length > 0) {
+      <div class="mt-4 flex flex-wrap gap-2">
+        @for (category of categories(); track category.id) {
+          <button
+            type="button"
+            (click)="quickSelectCategory(category.slug ?? category.name)"
+            class="px-3 py-1.5 rounded-full border border-slate-300 text-xs font-medium text-slate-700 hover:border-slate-900 hover:text-slate-900 transition-colors"
+          >
+            {{ category.name }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  @if (error()) {
+    <section class="border border-red-200 bg-red-50 text-red-700 rounded-xl p-4 text-sm">
+      {{ error() }}
+    </section>
+  }
+
+  @if (loading()) {
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      @for (_ of [1, 2, 3, 4, 5, 6, 7, 8]; track $index) {
+        <div class="h-80 rounded-xl border border-slate-200 bg-white p-3 animate-pulse">
+          <div class="h-44 rounded-lg bg-slate-200"></div>
+          <div class="h-4 bg-slate-200 rounded mt-4"></div>
+          <div class="h-4 bg-slate-200 rounded mt-2 w-3/4"></div>
+          <div class="h-8 bg-slate-200 rounded mt-5"></div>
+        </div>
+      }
+    </section>
+  } @else if (products().length === 0) {
+    <section class="text-center py-14 border border-slate-200 rounded-2xl bg-white">
+      <h2 class="text-lg font-semibold text-slate-900">No products found</h2>
+      <p class="text-sm text-slate-600 mt-2">Try changing the filters or search query.</p>
       <button
+        type="button"
         (click)="clearFilters()"
-        class="mt-4 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+        class="mt-4 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
       >
-        Clear Filters
+        Clear filters
       </button>
-    </div>
-  </ng-template>
+    </section>
+  } @else {
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      @for (product of products(); track product.id) {
+        <app-product-card [product]="product" />
+      }
+    </section>
+
+    <nav class="flex items-center justify-center gap-1 pt-2" aria-label="Product pagination">
+      <button
+        type="button"
+        (click)="goToPage(pagination().page - 1)"
+        [disabled]="pagination().page <= 1"
+        class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Prev
+      </button>
+
+      @for (page of pageNumbers(); track page) {
+        <button
+          type="button"
+          (click)="goToPage(page)"
+          [class]="page === pagination().page
+            ? 'px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium'
+            : 'px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-100'"
+        >
+          {{ page }}
+        </button>
+      }
+
+      <button
+        type="button"
+        (click)="goToPage(pagination().page + 1)"
+        [disabled]="pagination().page >= pagination().totalPages"
+        class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
+    </nav>
+  }
 </div>

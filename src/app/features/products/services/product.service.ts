@@ -1,122 +1,209 @@
-import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Product, ProductResponse } from '../models/product';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import {
+  ProductApiDto,
+  ProductDetail,
+  ProductListApiEnvelope,
+  ProductListApiResponse,
+  ProductListResponse,
+  ProductQueryParams,
+  ProductSummary
+} from '../models/product';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  private apiUrl = '/api/products';
+  private readonly http = inject(HttpClient);
+  private readonly productApiUrl = `${environment.apiBaseUrl}/api/products`;
 
-  // Signals for reactive state
-  products = signal<Product[]>([]);
-  loading = signal(false);
-  error = signal<string | null>(null);
+  getProducts(query: ProductQueryParams): Observable<ProductListResponse> {
+    const params = this.buildQueryParams(query);
 
-  constructor(private http: HttpClient) {
-    this.loadMockProducts();
+    return this.http
+      .get<ProductListApiEnvelope | ProductListApiEnvelope[] | ProductListApiResponse | ProductApiDto[]>(this.productApiUrl, { params })
+      .pipe(map((response) => this.normalizeProductListResponse(response, query.page ?? 1, query.limit ?? 12)));
   }
 
-  private loadMockProducts() {
-    // Mock data for development
-    this.products.set([
-      {
-        id: '1',
-        name: 'Premium Headphones',
-        description: 'High-quality wireless headphones with noise cancellation',
-        price: 199.99,
-        image: 'https://via.placeholder.com/300x200?text=Headphones',
-        category: 'Electronics',
-        rating: 4.5,
-        reviews: 128,
-        inStock: true,
-        sku: 'HP-001'
-      },
-      {
-        id: '2',
-        name: 'Wireless Keyboard',
-        description: 'Ergonomic wireless keyboard for comfortable typing',
-        price: 79.99,
-        image: 'https://via.placeholder.com/300x200?text=Keyboard',
-        category: 'Electronics',
-        rating: 4.2,
-        reviews: 94,
-        inStock: true,
-        sku: 'KB-001'
-      },
-      {
-        id: '3',
-        name: 'USB-C Hub',
-        description: 'Multi-port USB-C hub with 7 ports',
-        price: 49.99,
-        image: 'https://via.placeholder.com/300x200?text=Hub',
-        category: 'Accessories',
-        rating: 4.7,
-        reviews: 203,
-        inStock: true,
-        sku: 'HUB-001'
-      },
-      {
-        id: '4',
-        name: 'Laptop Stand',
-        description: 'Adjustable aluminum laptop stand',
-        price: 39.99,
-        image: 'https://via.placeholder.com/300x200?text=Stand',
-        category: 'Accessories',
-        rating: 4.4,
-        reviews: 156,
-        inStock: false,
-        sku: 'STAND-001'
-      },
-      {
-        id: '5',
-        name: 'Mechanical Mouse',
-        description: 'Precision gaming mouse with customizable buttons',
-        price: 89.99,
-        image: 'https://via.placeholder.com/300x200?text=Mouse',
-        category: 'Electronics',
-        rating: 4.6,
-        reviews: 312,
-        inStock: true,
-        sku: 'MOUSE-001'
-      },
-      {
-        id: '6',
-        name: 'Monitor Arm',
-        description: 'Full-motion monitor arm for dual screens',
-        price: 59.99,
-        image: 'https://via.placeholder.com/300x200?text=Arm',
-        category: 'Accessories',
-        rating: 4.3,
-        reviews: 89,
-        inStock: true,
-        sku: 'ARM-001'
+  getProductBySlug(slug: string): Observable<ProductDetail> {
+    return this.http
+      .get<ProductApiDto | { data?: ProductApiDto } | Array<ProductApiDto | { data?: ProductApiDto }>>(
+        `${this.productApiUrl}/${encodeURIComponent(slug)}`
+      )
+      .pipe(map((response) => this.extractProductDto(response)), map((dto) => this.mapToProductDetail(dto)));
+  }
+
+  private buildQueryParams(query: ProductQueryParams): HttpParams {
+    let params = new HttpParams();
+    const entries = Object.entries(query) as Array<[keyof ProductQueryParams, ProductQueryParams[keyof ProductQueryParams]]>;
+
+    for (const [key, value] of entries) {
+      if (value === undefined || value === null || value === '') {
+        continue;
       }
-    ]);
+
+      params = params.set(key, String(value));
+    }
+
+    return params;
   }
 
-  getProducts() {
-    return this.products();
+  private normalizeProductListResponse(
+    response: ProductListApiEnvelope | ProductListApiEnvelope[] | ProductListApiResponse | ProductApiDto[],
+    fallbackPage: number,
+    fallbackLimit: number
+  ): ProductListResponse {
+    if (Array.isArray(response) && response.length > 0 && this.isEnvelope(response[0])) {
+      const envelope = response[0];
+      const productsRaw = envelope.data ?? [];
+      const products = productsRaw.map((item) => this.mapToProductSummary(item));
+
+      const page = this.toPositiveNumber(envelope.meta?.page, fallbackPage);
+      const limit = this.toPositiveNumber(envelope.meta?.limit, fallbackLimit);
+      const total = this.toPositiveNumber(envelope.meta?.total, products.length);
+      const totalPages = this.toPositiveNumber(envelope.meta?.pages, Math.max(1, Math.ceil(total / Math.max(limit, 1))));
+
+      return {
+        products,
+        page,
+        limit,
+        total,
+        totalPages
+      };
+    }
+
+    if (Array.isArray(response)) {
+      const products = response
+        .filter((item): item is ProductApiDto => this.isProductApiDto(item))
+        .map((item) => this.mapToProductSummary(item));
+      const total = products.length;
+      return {
+        products,
+        page: fallbackPage,
+        limit: fallbackLimit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / fallbackLimit))
+      };
+    }
+
+    if (this.isListApiResponse(response)) {
+      const productsRaw = response.products ?? response.data ?? response.items ?? [];
+      const products = productsRaw.map((item) => this.mapToProductSummary(item));
+
+      const page = this.toPositiveNumber(response.page ?? response.meta?.page, fallbackPage);
+      const limit = this.toPositiveNumber(response.limit ?? response.meta?.limit, fallbackLimit);
+      const total = this.toPositiveNumber(response.total ?? response.meta?.total, products.length);
+      const totalPages =
+        this.toPositiveNumber(response.totalPages ?? response.meta?.totalPages, 0) ||
+        this.toPositiveNumber(response.meta?.pages, 0) ||
+        Math.max(1, Math.ceil(total / Math.max(limit, 1)));
+
+      return {
+        products,
+        page,
+        limit,
+        total,
+        totalPages
+      };
+    }
+
+    const fallbackEnvelope = response as ProductListApiEnvelope;
+    const products = (fallbackEnvelope.data ?? []).map((item) => this.mapToProductSummary(item));
+    const page = this.toPositiveNumber(fallbackEnvelope.meta?.page, fallbackPage);
+    const limit = this.toPositiveNumber(fallbackEnvelope.meta?.limit, fallbackLimit);
+    const total = this.toPositiveNumber(fallbackEnvelope.meta?.total, products.length);
+    const totalPages =
+      this.toPositiveNumber(fallbackEnvelope.meta?.pages, 0) ||
+      Math.max(1, Math.ceil(total / Math.max(limit, 1)));
+
+    return {
+      products,
+      page,
+      limit,
+      total,
+      totalPages
+    };
   }
 
-  getProductById(id: string): Product | undefined {
-    return this.products().find(p => p.id === id);
+  private extractProductDto(
+    response: ProductApiDto | { data?: ProductApiDto } | Array<ProductApiDto | { data?: ProductApiDto }>
+  ): ProductApiDto {
+    if (Array.isArray(response)) {
+      const first = response[0];
+      if (!first) {
+        return {};
+      }
+
+      if (this.isWrappedProduct(first)) {
+        return first.data ?? {};
+      }
+
+      return first;
+    }
+
+    if (this.isWrappedProduct(response)) {
+      return response.data ?? {};
+    }
+
+    return response;
   }
 
-  searchProducts(query: string): Product[] {
-    const q = query.toLowerCase();
-    return this.products().filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q)
+  private isEnvelope(value: unknown): value is ProductListApiEnvelope {
+    return !!value && typeof value === 'object' && ('data' in value || 'meta' in value);
+  }
+
+  private isListApiResponse(value: unknown): value is ProductListApiResponse {
+    return (
+      !!value &&
+      typeof value === 'object' &&
+      ('products' in value || 'items' in value || 'totalPages' in value || 'page' in value || 'limit' in value || 'total' in value)
     );
   }
 
-  getProductsByCategory(category: string): Product[] {
-    return this.products().filter(p => p.category === category);
+  private isWrappedProduct(value: unknown): value is { data?: ProductApiDto } {
+    return !!value && typeof value === 'object' && 'data' in value;
   }
 
-  getCategories(): string[] {
-    return Array.from(new Set(this.products().map(p => p.category)));
+  private isProductApiDto(value: unknown): value is ProductApiDto {
+    return !!value && typeof value === 'object' && ('id' in value || 'title' in value || 'name' in value || 'slug' in value);
+  }
+
+  private toPositiveNumber(value: number | undefined, fallback: number): number {
+    if (value === undefined || value === null) {
+      return fallback;
+    }
+
+    return value > 0 ? value : fallback;
+  }
+
+  private mapToProductSummary(dto: ProductApiDto): ProductSummary {
+    const categoryName = typeof dto.category === 'string'
+      ? dto.category
+      : (dto.category?.name ?? 'Uncategorized');
+
+    const firstImage = dto.images?.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))[0];
+    const image = dto.image ?? dto.imageUrl ?? dto.thumbnail ?? firstImage?.url ?? 'https://via.placeholder.com/640x480?text=Product';
+
+    return {
+      id: String(dto.id ?? ''),
+      slug: dto.slug ?? String(dto.id ?? ''),
+      name: dto.name ?? dto.title ?? 'Untitled Product',
+      description: dto.description ?? dto.shortDescription ?? 'No description available.',
+      price: Number(dto.price ?? 0),
+      image,
+      category: categoryName,
+      inStock: dto.inStock ?? ((dto.stock ?? 0) > 0)
+    };
+  }
+
+  private mapToProductDetail(dto: ProductApiDto): ProductDetail {
+    const base = this.mapToProductSummary(dto);
+    return {
+      ...base,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt
+    };
   }
 }

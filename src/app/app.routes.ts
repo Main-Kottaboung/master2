@@ -2,8 +2,6 @@ import { Routes } from '@angular/router';
 import { PublicLayout } from './layouts/public-layout';
 import { ShopLayout } from './layouts/shop-layout';
 import { AdminLayout } from './layouts/admin-layout';
-import { ProductListPage } from './features/products/pages/product-list';
-import { ProductDetailPage } from './features/products/pages/product-detail';
 import { LoginPage } from './features/auth/pages/login-page/login';
 import { RegisterPage } from './features/auth/pages/register-page/register';
 import { authGuard, guestGuard } from './features/auth/guards/auth.guard';
@@ -28,8 +26,16 @@ export const routes: Routes = [
     path: 'shop',
     component: ShopLayout,
     children: [
-      { path: '', component: ProductListPage },
-      { path: ':id', component: ProductDetailPage }
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/products/pages/product-list').then((m) => m.ProductListPage)
+      },
+      {
+        path: ':slug',
+        loadComponent: () =>
+          import('./features/products/pages/product-detail').then((m) => m.ProductDetailPage)
+      }
     ]
   },
   {
