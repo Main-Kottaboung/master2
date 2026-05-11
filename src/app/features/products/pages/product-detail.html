@@ -1,73 +1,60 @@
-<div *ngIf="notFound; else productContent" class="text-center py-12">
-  <div class="text-slate-500 text-lg">Product not found</div>
-  <a routerLink="/shop" class="mt-4 inline-block px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800">
-    Back to Shop
-  </a>
-</div>
-
-<ng-template #productContent>
-  <div *ngIf="product" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    <!-- Image -->
-    <div class="flex items-center justify-center bg-slate-100 rounded-lg h-96">
-      <img
-        [src]="product.image"
-        [alt]="product.name"
-        class="w-full h-full object-cover rounded-lg"
-      />
-    </div>
-
-    <!-- Details -->
-    <div class="space-y-6">
-      <div>
-        <div class="text-xs text-slate-500 uppercase tracking-wide">{{ product.category }}</div>
-        <h1 class="text-3xl font-bold text-slate-900 mt-1">{{ product.name }}</h1>
-      </div>
-
-      <!-- Rating -->
-      <div class="flex items-center gap-3">
-        <div class="text-lg text-slate-900">{{ product.rating }} ★</div>
-        <span class="text-slate-600">({{ product.reviews }} reviews)</span>
-      </div>
-
-      <!-- Price -->
-      <div class="text-3xl font-bold text-slate-900">${{ product.price.toFixed(2) }}</div>
-
-      <!-- Description -->
-      <div class="text-slate-700">{{ product.description }}</div>
-
-      <!-- Stock Status -->
-      <div [ngClass]="product.inStock ? 'text-green-600' : 'text-red-600'" class="font-semibold">
-        {{ product.inStock ? 'In Stock' : 'Out of Stock' }}
-      </div>
-
-      <!-- SKU -->
-      <div class="text-sm text-slate-600">
-        <span class="font-medium">SKU:</span> {{ product.sku }}
-      </div>
-
-      <!-- Actions -->
-      <div class="flex gap-3 pt-4">
-        <button
-          (click)="addToCart()"
-          [disabled]="!product.inStock"
-          class="flex-1 px-6 py-3 font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {{ product.inStock ? 'Add to Cart' : 'Out of Stock' }}
-        </button>
-        <button class="px-6 py-3 font-semibold text-slate-900 border-2 border-slate-900 rounded-lg hover:bg-slate-50 transition-colors">
-          ♡ Wishlist
-        </button>
-      </div>
-
-      <!-- Related Info -->
-      <div class="pt-6 border-t">
-        <h3 class="font-semibold text-slate-900 mb-2">More Details</h3>
-        <ul class="space-y-1 text-sm text-slate-600">
-          <li>✓ Free shipping on orders over $50</li>
-          <li>✓ 30-day money back guarantee</li>
-          <li>✓ 2-year warranty included</li>
-        </ul>
-      </div>
+@if (loading()) {
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse">
+    <div class="h-96 rounded-xl bg-slate-200"></div>
+    <div class="space-y-4">
+      <div class="h-5 w-24 rounded bg-slate-200"></div>
+      <div class="h-8 w-3/4 rounded bg-slate-200"></div>
+      <div class="h-7 w-1/3 rounded bg-slate-200"></div>
+      <div class="h-4 w-full rounded bg-slate-200"></div>
+      <div class="h-4 w-5/6 rounded bg-slate-200"></div>
     </div>
   </div>
-</ng-template>
+} @else if (error()) {
+  <div class="text-center py-14 border border-red-200 bg-red-50 rounded-2xl">
+    <h1 class="text-lg font-semibold text-red-700">Could not load product</h1>
+    <p class="text-sm text-red-600 mt-2">{{ error() }}</p>
+    <a routerLink="/shop" class="mt-4 inline-flex px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">
+      Back to shop
+    </a>
+  </div>
+} @else if (notFound()) {
+  <div class="text-center py-14 border border-slate-200 rounded-2xl bg-white">
+    <h1 class="text-lg font-semibold text-slate-900">Product not found</h1>
+    <p class="text-sm text-slate-600 mt-2">The item may have been removed or the link is invalid.</p>
+    <a routerLink="/shop" class="mt-4 inline-flex px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">
+      Back to shop
+    </a>
+  </div>
+} @else if (product(); as currentProduct) {
+  <article class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+      <img [src]="currentProduct.image" [alt]="currentProduct.name" class="w-full h-96 object-cover" />
+    </div>
+
+    <div class="space-y-5">
+      <div>
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">{{ currentProduct.category }}</div>
+        <h1 class="text-3xl font-bold text-slate-900 mt-1">{{ currentProduct.name }}</h1>
+      </div>
+
+      <div class="text-3xl font-bold text-slate-900">${{ currentProduct.price.toFixed(2) }}</div>
+
+      <p class="text-slate-700 leading-relaxed">{{ currentProduct.description }}</p>
+
+      @if (currentProduct.inStock) {
+        <div class="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-700">In stock</div>
+      } @else {
+        <div class="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-rose-100 text-rose-700">Out of stock</div>
+      }
+
+      <div class="pt-4 border-t border-slate-200">
+        <a
+          routerLink="/shop"
+          class="inline-flex items-center px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition-colors"
+        >
+          Back to products
+        </a>
+      </div>
+    </div>
+  </article>
+}

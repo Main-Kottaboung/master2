@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Product } from '../models/product';
+import { ProductSummary } from '../models/product';
 
 @Component({
   selector: 'app-product-card',
   imports: [CommonModule, RouterModule],
   templateUrl: './product-card.html',
-  styleUrl: './product-card.scss'
+  styleUrl: './product-card.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductCard {
-  @Input() product!: Product;
+  product = input.required<ProductSummary>();
 }
