@@ -50,6 +50,35 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'checkout',
+    canActivate: [authGuard],
+    component: ShopLayout,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/orders/pages/checkout-page').then((m) => m.CheckoutPage)
+      }
+    ]
+  },
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    component: ShopLayout,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/orders/pages/orders-history-page').then((m) => m.OrdersHistoryPage)
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./features/orders/pages/order-detail-page').then((m) => m.OrderDetailPage)
+      }
+    ]
+  },
+  {
     path: 'admin',
     canActivate: [authGuard],
     data: { role: 'admin' },

@@ -15,6 +15,7 @@
             </span>
           }
         </a>
+        <a *ngIf="authService.isAuthenticated()" routerLink="/orders" class="text-slate-700 hover:text-slate-900">Orders</a>
         <a *ngIf="authService.isAuthenticated()" routerLink="/account" class="text-slate-700 hover:text-slate-900">Account</a>
       </nav>
 
