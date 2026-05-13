@@ -192,6 +192,7 @@ export class ProductService {
       name: dto.name ?? dto.title ?? 'Untitled Product',
       description: dto.description ?? dto.shortDescription ?? 'No description available.',
       price: Number(dto.price ?? 0),
+      stock: Number(dto.stock ?? 0),
       image,
       category: categoryName,
       inStock: dto.inStock ?? ((dto.stock ?? 0) > 0)

@@ -1,0 +1,114 @@
+<section class="space-y-4">
+  <header class="flex items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">Orders</h1>
+      <p class="text-sm text-slate-600 mt-1">Search, sort, and manage ecommerce orders.</p>
+    </div>
+    <div class="text-sm text-slate-600">
+      {{ meta().total ?? 0 }} total order{{ (meta().total ?? 0) === 1 ? '' : 's' }}
+    </div>
+  </header>
+
+  <section class="bg-white border border-slate-200 rounded-2xl p-4 space-y-4">
+    <form [formGroup]="filtersForm" (ngSubmit)="applyFilters()" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 items-end">
+      <div class="xl:col-span-2">
+        <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Search</label>
+        <input type="text" formControlName="q" placeholder="Search by customer, order id, email" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Status</label>
+        <select formControlName="status" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm">
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status === 'all' ? 'All statuses' : status }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Sort by</label>
+        <select formControlName="sortBy" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm">
+          @for (field of sortFields; track field) {
+            <option [value]="field">{{ field }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Direction</label>
+        <select formControlName="sortDir" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm">
+          <option value="desc">Newest first</option>
+          <option value="asc">Oldest first</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Page size</label>
+        <select formControlName="limit" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm">
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
+      <div class="md:col-span-2 xl:col-span-5 flex gap-2 pt-1">
+        <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">Apply</button>
+        <button type="button" (click)="clearFilters()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100">Reset</button>
+      </div>
+    </form>
+  </section>
+
+  @if (loading()) {
+    <div class="space-y-3 animate-pulse">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="h-16 rounded-xl bg-white border border-slate-200"></div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">{{ error() }}</div>
+  } @else if (orders().length === 0) {
+    <div class="text-center py-16 bg-white border border-slate-200 rounded-2xl">
+      <h2 class="text-lg font-semibold text-slate-900">No orders found</h2>
+      <p class="mt-2 text-slate-600">Try a different search or filter combination.</p>
+    </div>
+  } @else {
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wide">
+            <tr>
+              <th class="text-left px-4 py-3">Order</th>
+              <th class="text-left px-4 py-3">Customer</th>
+              <th class="text-left px-4 py-3">Status</th>
+              <th class="text-left px-4 py-3">Items</th>
+              <th class="text-left px-4 py-3">Total</th>
+              <th class="text-left px-4 py-3">Created</th>
+              <th class="text-left px-4 py-3">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            @for (order of orders(); track order.id) {
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-4 font-medium text-slate-900">#{{ order.id }}</td>
+                <td class="px-4 py-4">
+                  <div class="font-medium text-slate-900">{{ order.customer?.name ?? ('User #' + order.userId) }}</div>
+                  <div class="text-xs text-slate-500">{{ order.customer?.email ?? 'No email available' }}</div>
+                </td>
+                <td class="px-4 py-4 capitalize">{{ order.status }}</td>
+                <td class="px-4 py-4">{{ order.totalQuantity }}</td>
+                <td class="px-4 py-4 font-semibold text-slate-900">${{ order.totalAmount.toFixed(2) }}</td>
+                <td class="px-4 py-4 text-slate-600">{{ order.createdAt | date:'mediumDate' }}</td>
+                <td class="px-4 py-4">
+                  <a [routerLink]="['/admin/orders', order.id]" class="inline-flex px-3 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100">View</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <nav class="flex items-center justify-center gap-2 pt-2" aria-label="Admin orders pagination">
+      <button type="button" (click)="goToPage((meta().page ?? 1) - 1)" [disabled]="(meta().page ?? 1) <= 1" class="px-3 py-2 rounded-lg border border-slate-300 text-sm disabled:opacity-50">Prev</button>
+      @for (page of pageNumbers(); track page) {
+        <button type="button" (click)="goToPage(page)" [class]="page === (meta().page ?? 1) ? 'px-3 py-2 rounded-lg bg-slate-900 text-white text-sm' : 'px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-100'">{{ page }}</button>
+      }
+      <button type="button" (click)="goToPage((meta().page ?? 1) + 1)" [disabled]="(meta().page ?? 1) >= (meta().pages ?? 1)" class="px-3 py-2 rounded-lg border border-slate-300 text-sm disabled:opacity-50">Next</button>
+    </nav>
+  }
+</section>

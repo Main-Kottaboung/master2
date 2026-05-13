@@ -5,6 +5,7 @@ import { AdminLayout } from './layouts/admin-layout';
 import { LoginPage } from './features/auth/pages/login-page/login';
 import { RegisterPage } from './features/auth/pages/register-page/register';
 import { authGuard, guestGuard } from './features/auth/guards/auth.guard';
+import { adminGuard, adminChildGuard } from './features/admin/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -39,16 +40,66 @@ export const routes: Routes = [
     ]
   },
   {
-    path: 'admin',
+    path: 'cart',
+    component: ShopLayout,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/cart/pages/cart-page').then((m) => m.CartPage)
+      }
+    ]
+  },
+  {
+    path: 'checkout',
     canActivate: [authGuard],
-    data: { role: 'admin' },
+    component: ShopLayout,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/orders/pages/checkout-page').then((m) => m.CheckoutPage)
+      }
+    ]
+  },
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    component: ShopLayout,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/orders/pages/orders-history-page').then((m) => m.OrdersHistoryPage)
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./features/orders/pages/order-detail-page').then((m) => m.OrderDetailPage)
+      }
+    ]
+  },
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    canActivateChild: [adminChildGuard],
     component: AdminLayout,
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: PublicLayout },
-      { path: 'products', component: PublicLayout },
-      { path: 'orders', component: PublicLayout },
-      { path: 'customers', component: PublicLayout }
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-dashboard-page').then((m) => m.AdminDashboardPage)
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-orders-page').then((m) => m.AdminOrdersPage)
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-order-detail-page').then((m) => m.AdminOrderDetailPage)
+      }
     ]
   },
   { path: '**', redirectTo: 'shop' }

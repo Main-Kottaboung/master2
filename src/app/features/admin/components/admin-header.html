@@ -1,0 +1,21 @@
+<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+  <div class="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Admin Panel</p>
+      <h1 class="text-lg font-semibold text-slate-900">Ecommerce Dashboard</h1>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a routerLink="/shop" class="hidden sm:inline-flex px-3 py-2 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-100">
+        View Store
+      </a>
+      <button
+        type="button"
+        (click)="logout()"
+        class="inline-flex px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+</header>
