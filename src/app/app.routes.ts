@@ -39,6 +39,17 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'cart',
+    component: ShopLayout,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/cart/pages/cart-page').then((m) => m.CartPage)
+      }
+    ]
+  },
+  {
     path: 'admin',
     canActivate: [authGuard],
     data: { role: 'admin' },

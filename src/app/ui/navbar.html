@@ -7,7 +7,14 @@
 
       <nav class="hidden md:flex items-center gap-4 text-sm">
         <a routerLink="/shop" class="text-slate-700 hover:text-slate-900">Shop</a>
-        <a routerLink="/cart" class="text-slate-700 hover:text-slate-900">Cart</a>
+        <a routerLink="/cart" class="text-slate-700 hover:text-slate-900 inline-flex items-center gap-2">
+          <span>Cart</span>
+          @if (authService.isAuthenticated()) {
+            <span class="inline-flex min-w-5 h-5 px-1 rounded-full bg-slate-900 text-white text-[11px] items-center justify-center">
+              {{ cartService.itemCount() }}
+            </span>
+          }
+        </a>
         <a *ngIf="authService.isAuthenticated()" routerLink="/account" class="text-slate-700 hover:text-slate-900">Account</a>
       </nav>
 
