@@ -1,0 +1,24 @@
+<aside class="h-full bg-slate-950 text-slate-100 border-r border-slate-800 w-72 p-4 flex flex-col gap-4">
+  <div class="px-2 py-3 border-b border-slate-800">
+    <div class="text-xs uppercase tracking-[0.24em] text-slate-400 font-semibold">Store Admin</div>
+    <div class="text-lg font-semibold mt-1">ShopBrand</div>
+  </div>
+
+  <nav class="flex-1 space-y-1 text-sm">
+    <a routerLink="/admin" routerLinkActive="bg-slate-800 text-white" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-900 hover:text-white transition-colors">
+      <span>Dashboard</span>
+    </a>
+    <a routerLink="/admin/orders" routerLinkActive="bg-slate-800 text-white" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-900 hover:text-white transition-colors">
+      <span>Orders</span>
+    </a>
+    <div class="pt-4 mt-4 border-t border-slate-800">
+      <p class="px-3 text-[11px] uppercase tracking-[0.24em] text-slate-500 mb-2">Future</p>
+      <div class="space-y-1">
+        <span class="flex items-center px-3 py-2 rounded-lg text-slate-500">Products</span>
+        <span class="flex items-center px-3 py-2 rounded-lg text-slate-500">Categories</span>
+        <span class="flex items-center px-3 py-2 rounded-lg text-slate-500">Users</span>
+        <span class="flex items-center px-3 py-2 rounded-lg text-slate-500">Analytics</span>
+      </div>
+    </div>
+  </nav>
+</aside>

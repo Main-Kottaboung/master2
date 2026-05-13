@@ -5,6 +5,7 @@ import { AdminLayout } from './layouts/admin-layout';
 import { LoginPage } from './features/auth/pages/login-page/login';
 import { RegisterPage } from './features/auth/pages/register-page/register';
 import { authGuard, guestGuard } from './features/auth/guards/auth.guard';
+import { adminGuard, adminChildGuard } from './features/admin/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -80,15 +81,25 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    canActivate: [authGuard],
-    data: { role: 'admin' },
+    canActivate: [adminGuard],
+    canActivateChild: [adminChildGuard],
     component: AdminLayout,
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: PublicLayout },
-      { path: 'products', component: PublicLayout },
-      { path: 'orders', component: PublicLayout },
-      { path: 'customers', component: PublicLayout }
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-dashboard-page').then((m) => m.AdminDashboardPage)
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-orders-page').then((m) => m.AdminOrdersPage)
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-order-detail-page').then((m) => m.AdminOrderDetailPage)
+      }
     ]
   },
   { path: '**', redirectTo: 'shop' }
